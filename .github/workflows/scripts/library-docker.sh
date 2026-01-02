@@ -53,8 +53,6 @@ case "$cmd" in
     image_ref="${IMAGE_NAME}:${IMAGE_VERSION}"
     if docker run --rm ${platform_flag} --entrypoint /usr/bin/chromium "$image_ref" --version; then
       true
-    elif docker run --rm ${platform_flag} --entrypoint /usr/bin/chromium-browser "$image_ref" --version; then
-      true
     else
       echo "Chromium binary not found for smoke test." >&2
       exit 1
