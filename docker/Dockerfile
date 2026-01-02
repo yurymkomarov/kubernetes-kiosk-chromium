@@ -1,4 +1,6 @@
-FROM debian:12-slim
+ARG DEBIAN_CODENAME=trixie
+
+FROM debian:${DEBIAN_CODENAME}-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     DISPLAY=:0 \
@@ -6,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 ARG TARGETARCH
 ARG USE_RPI_CHROMIUM=auto
-ARG DEBIAN_CODENAME=bookworm
+ARG DEBIAN_CODENAME
 
 COPY bin/install.sh /usr/src/install.sh
 RUN chmod a+x /usr/src/install.sh && \

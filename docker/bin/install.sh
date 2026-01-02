@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-: "${DEBIAN_CODENAME:=bookworm}"
+: "${DEBIAN_CODENAME:=}"
 : "${USE_RPI_CHROMIUM:=auto}"
 : "${TARGETARCH:=}"
 : "${RPI_GPG_FINGERPRINT:=CF8A1AF502A2AA2D763BAE7E82B129927FA3303E}"
@@ -43,7 +43,7 @@ install_base_packages() {
     dumb-init \
     chromium-sandbox \
     libdrm2 libgbm1 libinput10 udev \
-    libgl1-mesa-dri libgles2-mesa \
+    libgl1-mesa-dri libgles2 \
     dbus fontconfig \
     fonts-dejavu ca-certificates curl gnupg \
     libegl1 \
