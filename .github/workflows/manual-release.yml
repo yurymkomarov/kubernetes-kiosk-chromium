@@ -1,0 +1,105 @@
+name: "Manual: Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: "Release type (major, minor, patch)"
+        required: true
+        default: minor
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions: write-all
+
+concurrency:
+  group: manual-release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gitleaks:
+    name: "Gitleaks"
+    uses: ./.github/workflows/library-gitleaks.yml
+
+  prepare_release:
+    name: "Prepare Release Commit"
+    needs: [gitleaks]
+    runs-on: ubuntu-latest
+    permissions: write-all
+    outputs:
+      release_sha: ${{ steps.commit.outputs.commit_long_sha }}
+      release_version: ${{ steps.version.outputs.release_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+      - name: Compute release version
+        id: version
+        run: bash ./.github/workflows/scripts/library-version.sh
+        env:
+          VERSION_KIND: release-manual
+          RELEASE_TYPE: ${{ inputs.release_type }}
+      - name: Create empty release commit
+        id: commit
+        uses: EndBug/add-and-commit@v9.1.4
+        with:
+          message: "Release ${{ steps.version.outputs.release_version }} preparations"
+          commit: --allow-empty
+          push: true
+          default_author: github_actions
+
+  init:
+    name: "Validate"
+    needs: [gitleaks, prepare_release]
+    uses: ./.github/workflows/library-init.yml
+    with:
+      checkout_ref: ${{ needs.prepare_release.outputs.release_sha }}
+
+  docker:
+    name: "Docker Release"
+    needs: [gitleaks, prepare_release, init]
+    if: ${{ needs.init.result == 'success' }}
+    uses: ./.github/workflows/library-docker.yml
+    permissions: write-all
+    with:
+      checkout_ref: ${{ needs.prepare_release.outputs.release_sha }}
+      event_kind: release
+      docker_tags: |
+        type=raw,value=${{ needs.prepare_release.outputs.release_version }}
+      image_version: ${{ needs.prepare_release.outputs.release_version }}
+      publish_trivy_results: true
+      enable_manifest_check: true
+      manifest_check_refs: |
+        ghcr.io/${{ github.repository_owner }}/docker/${{ github.event.repository.name }}:${{ needs.prepare_release.outputs.release_version }}
+      published_tags: "${{ needs.prepare_release.outputs.release_version }}"
+
+  helm:
+    name: "Helm Release"
+    needs: [init, docker, prepare_release]
+    if: ${{ needs.docker.result == 'success' }}
+    uses: ./.github/workflows/library-helm.yml
+    permissions: write-all
+    with:
+      chart_version: ${{ needs.prepare_release.outputs.release_version }}
+      image_tag: ${{ needs.prepare_release.outputs.release_version }}
+      checkout_ref: ${{ needs.prepare_release.outputs.release_sha }}
+
+  release:
+    name: "GitHub Release"
+    needs: [init, docker, helm, prepare_release]
+    if: ${{ needs.docker.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2.5.0
+        with:
+          tag_name: v${{ needs.prepare_release.outputs.release_version }}
+          target_commitish: ${{ needs.prepare_release.outputs.release_sha }}
+          name: v${{ needs.prepare_release.outputs.release_version }}
+          generate_release_notes: true

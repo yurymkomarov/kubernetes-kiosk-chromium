@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helper.fullname" . }}
+  labels:
+{{ include "helper.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+{{ include "helper.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+{{ include "helper.selectorLabels" . | nindent 8 }}
+{{- with .Values.podLabels }}
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .Values.podAnnotations }}
+      annotations:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+    spec:
+      hostNetwork: {{ .Values.hostNetwork }}
+{{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+{{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | nindent 8 }}
+{{- end }}
+      containers:
+        - name: {{ include "helper.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+{{ toYaml .Values.securityContext | nindent 12 }}
+          env:
+{{- range $key, $value := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+{{- end }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: dri
+              mountPath: /dev/dri
+            - name: input
+              mountPath: /dev/input
+            - name: udev
+              mountPath: /run/udev
+              readOnly: true
+            - name: vchiq
+              mountPath: /dev/vchiq
+            - name: vcsm
+              mountPath: /dev/vcsm-cma
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  [ -S /tmp/.X11-unix/X0 ] && \
+                  pgrep -f "matchbox-window-manager" >/dev/null && \
+                  (pgrep -f "chromium --kiosk" >/dev/null || pgrep -f "chromium-browser --kiosk" >/dev/null)
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  pgrep -f "chromium.*--kiosk" >/dev/null || pgrep -f "chromium-browser.*--kiosk" >/dev/null
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 3
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  pgrep -f "chromium.*--kiosk" >/dev/null || pgrep -f "chromium-browser.*--kiosk" >/dev/null
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+            timeoutSeconds: 3
+      volumes:
+        - name: dri
+          hostPath:
+            path: /dev/dri
+        - name: input
+          hostPath:
+            path: /dev/input
+        - name: udev
+          hostPath:
+            path: /run/udev
+        - name: vchiq
+          hostPath:
+            path: /dev/vchiq
+        - name: vcsm
+          hostPath:
+            path: /dev/vcsm-cma
+        - name: data
+          emptyDir:
+            medium: Memory
+            sizeLimit: 256Mi

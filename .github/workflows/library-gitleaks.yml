@@ -1,0 +1,21 @@
+name: "Library: Gitleaks"
+
+on:
+  workflow_call:
+
+permissions: write-all
+
+jobs:
+  gitleaks:
+    name: "Gitleaks Scan"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

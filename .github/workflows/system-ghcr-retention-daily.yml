@@ -1,0 +1,24 @@
+name: "System: GHCR Retention"
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions: write-all
+
+jobs:
+  cleanup:
+    name: "Cleanup Untagged"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+      - name: Delete old untagged versions
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python ./.github/workflows/scripts/ghcr-retention.py

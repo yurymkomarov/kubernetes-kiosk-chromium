@@ -1,0 +1,64 @@
+name: "Library: Version"
+
+on:
+  workflow_call:
+    inputs:
+      version_kind:
+        required: false
+        type: string
+        default: none
+      pr_id:
+        required: false
+        type: string
+        default: ""
+      source_ref:
+        required: false
+        type: string
+        default: ""
+      release_type:
+        required: false
+        type: string
+        default: ""
+      checkout_ref:
+        required: false
+        type: string
+        default: ""
+    outputs:
+      short_sha:
+        description: "Short commit SHA"
+        value: ${{ jobs.version.outputs.short_sha }}
+      chart_version:
+        description: "Computed chart version"
+        value: ${{ jobs.version.outputs.chart_version }}
+      image_tag:
+        description: "Computed image tag"
+        value: ${{ jobs.version.outputs.image_tag }}
+      release_version:
+        description: "Computed release version"
+        value: ${{ jobs.version.outputs.release_version }}
+
+permissions: write-all
+
+jobs:
+  version:
+    name: "Compute Version"
+    runs-on: ubuntu-latest
+    outputs:
+      short_sha: ${{ steps.version.outputs.short_sha }}
+      chart_version: ${{ steps.version.outputs.chart_version }}
+      image_tag: ${{ steps.version.outputs.image_tag }}
+      release_version: ${{ steps.version.outputs.release_version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.checkout_ref || github.sha }}
+      - name: Compute version
+        id: version
+        run: bash ./.github/workflows/scripts/library-version.sh
+        env:
+          VERSION_KIND: ${{ inputs.version_kind }}
+          PR_ID: ${{ inputs.pr_id }}
+          SOURCE_REF: ${{ inputs.source_ref }}
+          RELEASE_TYPE: ${{ inputs.release_type }}

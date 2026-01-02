@@ -1,0 +1,56 @@
+name: "Pipeline: PR to Main"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions: write-all
+
+concurrency:
+  group: pr-main-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gitleaks:
+    name: "Gitleaks"
+    uses: ./.github/workflows/library-gitleaks.yml
+
+  init:
+    name: "Version"
+    needs: [gitleaks]
+    uses: ./.github/workflows/library-version.yml
+    with:
+      version_kind: pr-main
+      pr_id: ${{ github.event.pull_request.number }}
+
+  validate:
+    name: "Validate"
+    needs: [gitleaks, init]
+    uses: ./.github/workflows/library-init.yml
+
+  docker:
+    name: "Docker"
+    needs: [gitleaks, init, validate]
+    uses: ./.github/workflows/library-docker.yml
+    permissions: write-all
+    with:
+      event_kind: PR
+      publish_trivy_results: false
+      docker_tags: |
+        type=raw,value=${{ needs.init.outputs.chart_version }}
+        type=raw,value=${{ needs.init.outputs.image_tag }}
+      image_version: ${{ needs.init.outputs.image_tag }}
+      enable_manifest_check: false
+      manifest_check_refs: ""
+      published_tags: ${{ needs.init.outputs.chart_version }}, ${{ needs.init.outputs.image_tag }}
+
+  helm:
+    name: "Helm"
+    needs: [gitleaks, init, validate, docker]
+    if: ${{ needs.docker.result == 'success' }}
+    uses: ./.github/workflows/library-helm.yml
+    permissions: write-all
+    with:
+      chart_version: ${{ needs.init.outputs.chart_version }}
+      image_tag: ${{ needs.init.outputs.image_tag }}

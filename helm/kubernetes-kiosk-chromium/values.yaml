@@ -1,0 +1,50 @@
+image:
+  repository: "ghcr.io/yurymkomarov/docker/kubernetes-kiosk-chromium"
+  tag: "0.0.0"
+  pullPolicy: "IfNotPresent"
+
+# Optional registry credentials for private images.
+imagePullSecrets: []
+
+nameOverride: ""
+
+fullnameOverride: ""
+
+# Kiosk usually binds to a specific node with attached display hardware.
+hostNetwork: false
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Extra metadata for the pod.
+podAnnotations: {}
+
+podLabels: {}
+
+# Privileged required to access GPU/input devices on most targets.
+securityContext:
+  privileged: true
+
+# Chromium runtime configuration (see docker/bin/run.sh).
+env:
+  # ACCEL_PROFILE: safe | rpi
+  # safe -> disable dmabuf/zero-copy for stability
+  # rpi  -> allow dmabuf/zero-copy on vc4/v3d
+  ACCEL_PROFILE: "rpi"
+  # GPU: "1" enables GPU acceleration, "0" forces software rendering
+  GPU: "1"
+  # OUTPUT: display name from xrandr (empty -> first connected)
+  OUTPUT: "DSI-1"
+  # URL: page to open in kiosk mode
+  URL: "http://example.com"
+  # ROTATE: normal | left | right | inverted
+  ROTATE: "normal"
+  # CURSOR: "false" hides cursor, "true" shows it
+  CURSOR: "false"
+  # CHROMIUM_FLAGS: user flags prepended before defaults
+  CHROMIUM_FLAGS: ""
+  # EXTRA_FLAGS: extra Chromium flags appended to defaults
+  EXTRA_FLAGS: ""

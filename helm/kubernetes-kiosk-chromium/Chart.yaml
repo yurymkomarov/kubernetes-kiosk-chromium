@@ -1,0 +1,11 @@
+apiVersion: "v2"
+name: "kubernetes-kiosk-chromium"
+description: "Chromium kiosk for Kubernetes"
+annotations:
+  licenses: "Apache-2.0"
+type: "application"
+maintainers:
+  - name: "Yury Komarov"
+    url: "https://github.com/yurymkomarov"
+version: "0.0.0"
+appVersion: "0.0.0"

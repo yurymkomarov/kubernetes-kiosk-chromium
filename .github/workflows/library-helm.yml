@@ -1,0 +1,41 @@
+name: "Library: Helm"
+
+on:
+  workflow_call:
+    inputs:
+      chart_version:
+        required: true
+        type: string
+      image_tag:
+        required: true
+        type: string
+      checkout_ref:
+        required: false
+        type: string
+        default: ""
+
+permissions: write-all
+
+jobs:
+  publish:
+    name: "Publish Helm"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.checkout_ref || github.sha }}
+
+      - name: Publish Helm chart
+        env:
+          CHART_VERSION: ${{ inputs.chart_version }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./.github/workflows/scripts/helm_publish.sh
+
+      - name: Upload Helm chart artifact
+        uses: actions/upload-artifact@v6.0.0
+        with:
+          name: helm-chart-${{ inputs.chart_version }}
+          path: /tmp/helm/*.tgz
