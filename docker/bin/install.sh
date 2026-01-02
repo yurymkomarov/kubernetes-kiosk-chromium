@@ -2,7 +2,6 @@
 set -euo pipefail
 
 : "${DEBIAN_CODENAME:=}"
-: "${USE_RPI_CHROMIUM:=auto}"
 : "${TARGETARCH:=}"
 : "${RPI_GPG_FINGERPRINT:=CF8A1AF502A2AA2D763BAE7E82B129927FA3303E}"
 
@@ -16,20 +15,6 @@ detect_arch() {
     return
   fi
   uname -m
-}
-
-resolve_rpi_chromium() {
-  if [ "${USE_RPI_CHROMIUM}" != "auto" ]; then
-    return
-  fi
-  case "$(detect_arch)" in
-    arm64|aarch64)
-      USE_RPI_CHROMIUM=1
-      ;;
-    *)
-      USE_RPI_CHROMIUM=0
-      ;;
-  esac
 }
 
 # Install core X11 stack, minimal WM, and GPU/DRM/Mesa runtime libs.
@@ -52,36 +37,6 @@ install_base_packages() {
     mesa-utils-extra
 }
 
-# Install Chromium from Raspberry Pi repo (arm64). Use when Debian's
-# chromium package is not suitable for the target device.
-install_chromium_rpi() {
-  install -m 0755 -d /etc/apt/keyrings
-  local keyring="/etc/apt/keyrings/raspberrypi-archive-keyring.gpg"
-  local key_tmp
-  key_tmp="$(mktemp)"
-  curl -fsSL https://archive.raspberrypi.com/debian/raspberrypi.gpg.key -o "$key_tmp"
-  if [ -n "$RPI_GPG_FINGERPRINT" ]; then
-    local actual
-    actual="$(gpg --show-keys --with-colons "$key_tmp" | awk -F: '$1=="fpr"{print $10; exit}')"
-    if [ "$actual" != "$RPI_GPG_FINGERPRINT" ]; then
-      echo "Raspberry Pi repo key fingerprint mismatch: $actual" >&2
-      exit 1
-    fi
-  else
-    echo "Warning: RPI_GPG_FINGERPRINT is empty; skipping key verification." >&2
-  fi
-  gpg --dearmor -o "$keyring" "$key_tmp"
-  rm -f "$key_tmp"
-  echo "deb [arch=arm64 signed-by=/etc/apt/keyrings/raspberrypi-archive-keyring.gpg] http://archive.raspberrypi.com/debian ${DEBIAN_CODENAME} main" \
-    > /etc/apt/sources.list.d/raspi.list
-  printf 'Package: *\nPin: origin archive.raspberrypi.com\nPin-Priority: 600\n' \
-    > /etc/apt/preferences.d/raspi.pref
-
-  apt-get update
-  apt-get upgrade -y
-  apt-get install -y --no-install-recommends chromium-browser
-}
-
 # Install Chromium from Debian repos (default path for most targets).
 install_chromium_default() {
   apt-get update
@@ -96,20 +51,11 @@ fix_chrome_sandbox() {
     chown root:root /usr/lib/chromium/chrome-sandbox
     chmod 4755 /usr/lib/chromium/chrome-sandbox
   fi
-  if [ -e /usr/lib/chromium-browser/chrome-sandbox ]; then
-    chown root:root /usr/lib/chromium-browser/chrome-sandbox
-    chmod 4755 /usr/lib/chromium-browser/chrome-sandbox
-  fi
 }
 
 main() {
-  resolve_rpi_chromium
   install_base_packages
-  if [ "$USE_RPI_CHROMIUM" = "1" ]; then
-    install_chromium_rpi
-  else
-    install_chromium_default
-  fi
+  install_chromium_default
   fix_chrome_sandbox
   rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
 }
