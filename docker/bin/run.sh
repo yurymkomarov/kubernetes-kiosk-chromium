@@ -12,7 +12,7 @@ ACCEL_PROFILE="${ACCEL_PROFILE:-safe}"  # safe|rpi
 
 export DISPLAY=:0
 : "${XDG_RUNTIME_DIR:=/tmp/xdg}"
-CHROME_BIN="/usr/bin/chromium"; [ -x /usr/bin/chromium-browser ] && CHROME_BIN="/usr/bin/chromium-browser"
+CHROME_BIN="/usr/bin/chromium"
 
 # User-supplied Chromium flags (merged with defaults later).
 EXTRA_FLAGS_USER="${EXTRA_FLAGS:-}"
