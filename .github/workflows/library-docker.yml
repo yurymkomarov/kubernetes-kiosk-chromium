@@ -42,7 +42,7 @@ jobs:
       PLATFORMS: linux/amd64,linux/arm64
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
           ref: ${{ inputs.checkout_ref || github.sha }}
@@ -125,7 +125,7 @@ jobs:
       BUILD_CONTEXT: ./docker
     steps:
       - name: Checkout
-        uses: actions/checkout@v6.0.1
+        uses: actions/checkout@v6.0.2
         with:
           fetch-depth: 0
           ref: ${{ inputs.checkout_ref || github.sha }}
