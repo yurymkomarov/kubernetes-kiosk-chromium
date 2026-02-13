@@ -166,7 +166,7 @@ jobs:
 
       - name: Trivy (Docker Image Dependency Snapshot)
         if: ${{ inputs.publish_trivy_results }}
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: image
           image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
@@ -177,7 +177,7 @@ jobs:
 
       - name: Trivy (Docker Image SARIF)
         if: ${{ inputs.publish_trivy_results }}
-        uses: aquasecurity/trivy-action@0.33.1
+        uses: aquasecurity/trivy-action@0.34.0
         with:
           scan-type: image
           image-ref: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_VERSION }}
