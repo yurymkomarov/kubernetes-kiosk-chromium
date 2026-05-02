@@ -97,7 +97,7 @@ jobs:
     permissions: write-all
     steps:
       - name: Create GitHub release
-        uses: softprops/action-gh-release@v2.5.0
+        uses: softprops/action-gh-release@v2.6.1
         with:
           tag_name: v${{ needs.prepare_release.outputs.release_version }}
           target_commitish: ${{ needs.prepare_release.outputs.release_sha }}
