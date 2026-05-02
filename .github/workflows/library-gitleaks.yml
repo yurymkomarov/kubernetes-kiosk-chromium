@@ -3,7 +3,8 @@ name: "Library: Gitleaks"
 on:
   workflow_call:
 
-permissions: write-all
+permissions:
+  contents: read
 
 jobs:
   gitleaks:

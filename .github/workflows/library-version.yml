@@ -37,7 +37,8 @@ on:
         description: "Computed release version"
         value: ${{ jobs.version.outputs.release_version }}
 
-permissions: write-all
+permissions:
+  contents: read
 
 jobs:
   version:

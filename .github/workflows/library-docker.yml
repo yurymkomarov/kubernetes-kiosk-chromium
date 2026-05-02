@@ -35,7 +35,10 @@ jobs:
   build_publish:
     name: "Build and Publish"
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      actions: write
+      contents: read
+      packages: write
     env:
       DOCKERFILE_PATH: ./docker/Dockerfile
       BUILD_CONTEXT: ./docker
@@ -115,7 +118,10 @@ jobs:
     name: "Test and Analyze"
     needs: build_publish
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: read
+      packages: read
+      security-events: write
     strategy:
       fail-fast: false
       matrix:
@@ -198,6 +204,8 @@ jobs:
     needs: [build_publish, test_analyse]
     if: ${{ failure() && needs.build_publish.result == 'success' }}
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
       - name: Resolve cleanup tags
         run: bash ./.github/workflows/scripts/library-docker.sh cleanup-resolve-tags
