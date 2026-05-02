@@ -13,7 +13,10 @@ on:
           - minor
           - patch
 
-permissions: write-all
+permissions:
+  contents: write
+  packages: write
+  security-events: write
 
 concurrency:
   group: manual-release-${{ github.workflow }}-${{ github.ref }}
@@ -28,7 +31,10 @@ jobs:
     name: "Prepare Release Commit"
     needs: [gitleaks]
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
     outputs:
       release_sha: ${{ steps.commit.outputs.commit_long_sha }}
       release_version: ${{ steps.version.outputs.release_version }}
@@ -65,7 +71,10 @@ jobs:
     needs: [gitleaks, prepare_release, init]
     if: ${{ needs.init.result == 'success' }}
     uses: ./.github/workflows/library-docker.yml
-    permissions: write-all
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
     with:
       checkout_ref: ${{ needs.prepare_release.outputs.release_sha }}
       event_kind: release
@@ -83,7 +92,10 @@ jobs:
     needs: [init, docker, prepare_release]
     if: ${{ needs.docker.result == 'success' }}
     uses: ./.github/workflows/library-helm.yml
-    permissions: write-all
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
     with:
       chart_version: ${{ needs.prepare_release.outputs.release_version }}
       image_tag: ${{ needs.prepare_release.outputs.release_version }}
@@ -94,7 +106,10 @@ jobs:
     needs: [init, docker, helm, prepare_release]
     if: ${{ needs.docker.result == 'success' }}
     runs-on: ubuntu-latest
-    permissions: write-all
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
     steps:
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2.6.1
