@@ -54,7 +54,7 @@ jobs:
           RELEASE_TYPE: ${{ inputs.release_type }}
       - name: Create empty release commit
         id: commit
-        uses: EndBug/add-and-commit@v9.1.4
+        uses: EndBug/add-and-commit@v10.0.0
         with:
           message: "Release ${{ steps.version.outputs.release_version }} preparations"
           commit: --allow-empty
