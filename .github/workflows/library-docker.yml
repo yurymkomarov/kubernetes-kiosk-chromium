@@ -71,7 +71,7 @@ jobs:
           driver: docker-container
 
       - name: Log in to GHCR
-        uses: docker/login-action@v4.0.0
+        uses: docker/login-action@v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -155,7 +155,7 @@ jobs:
           driver: docker-container
 
       - name: Log in to GHCR
-        uses: docker/login-action@v4.0.0
+        uses: docker/login-action@v4.1.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
