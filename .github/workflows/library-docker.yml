@@ -95,7 +95,7 @@ jobs:
 
       - name: Build multi-arch image
         id: build_multiarch
-        uses: docker/build-push-action@v7.0.0
+        uses: docker/build-push-action@v7.1.0
         with:
           context: ${{ env.BUILD_CONTEXT }}
           file: ${{ env.DOCKERFILE_PATH }}
